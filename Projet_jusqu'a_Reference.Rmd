@@ -1,0 +1,438 @@
+---
+title: "Gap Statistic : Outil d'Évaluation Efficace en Analyse de Clustering"
+author: "Hengze WANG"
+date: "2024-11-09"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    latex_engine: xelatex
+    
+fontsize: 12pt
+mainfont: "Times New Roman"
+header-includes:
+  - \usepackage{amsmath}
+  - \usepackage{graphicx}
+  - \usepackage{amsmath}
+---
+
+```{r, echo=FALSE}
+check_and_load_packages <- function(pkgs) {
+  for (pkg in pkgs) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      install.packages(pkg)
+    }
+    if (!require(pkg, character.only = TRUE)) {
+      library(pkg, character.only = TRUE)
+    }
+  }
+}
+
+check_and_load_packages(c("ggplot2", "dplyr", "plotrix","factoextra","cluster","plyr"))
+
+```
+
+\clearpage
+
+# Introduction
+
+Dans le domaine de l'analyse de clustering, déterminer le nombre optimal de clusters représente un défi de taille. Le Gap Statistic, ou "statistique de l'écart", est une méthode d'évaluation cruciale qui a émergé pour répondre à ce besoin. Son principe repose sur la comparaison entre la structure de clustering des données réelles et celle d'une distribution de référence pour déterminer le nombre de clusters le plus approprié. Cette méthode fournit un moyen systématique et quantitatif d'évaluer la pertinence des résultats de clustering.
+
+Le calcul du Gap Statistic implique plusieurs étapes clés. Tout d'abord, pour un jeu de données donné et différents nombres hypothétiques de clusters, on calcule la variance intra-cluster, mesurant ainsi la cohésion des points au sein de chaque cluster. Une variance faible indique une similarité élevée entre les points d'un même cluster. Ensuite, une distribution de référence est construite, généralement par des méthodes de randomisation ou de simulation. On calcule ensuite la variance intra-cluster attendue dans cette distribution de référence. Enfin, on évalue la qualité des résultats de clustering pour chaque nombre de clusters en calculant la valeur du "Gap", soit la différence entre la variance intra-cluster réelle et celle attendue dans la référence. Un Gap élevé indique que la structure de clustering réelle se distingue de manière significative de la structure attendue sous la distribution de référence, suggérant que le nombre de clusters choisi est approprié.
+
+Le Gap Statistic présente de nombreux avantages. Il ne dépend pas d'hypothèses spécifiques sur la distribution des données, ce qui lui confère une grande polyvalence pour traiter divers types de données. Comparé aux règles empiriques traditionnelles ou aux méthodes de jugement subjectif, le Gap Statistic fournit un critère d'évaluation objectif basé sur des principes statistiques, réduisant ainsi les biais humains. Dans la pratique, cette méthode a été largement adoptée dans plusieurs domaines. Par exemple, en recherche biomédicale, elle aide les chercheurs à analyser les données d'expression génétique pour identifier des sous-types de maladies potentiels ou des biomarqueurs ; en études de marché, elle permet de segmenter les groupes de consommateurs, facilitant ainsi l'élaboration de stratégies de marketing plus ciblées.
+
+Néanmoins, le Gap Statistic n'est pas sans inconvénients. Dans certaines situations, telles que les données de haute dimension ou les distributions extrêmement complexes, ses performances peuvent être limitées. Cependant, dans l'ensemble, le Gap Statistic constitue une méthode précieuse pour déterminer le nombre optimal de clusters en analyse de clustering, favorisant le développement et l'application des techniques de clustering dans divers domaines. Avec l'avancée des recherches, cet outil est continuellement amélioré pour mieux s'adapter aux environnements de données complexes et changeants. \clearpage
+
+# Gap Statistics
+
+Nos données ${x_{ij}}$ (où $i = 1, 2, ..., n$ et $j = 1, 2, ..., p$) sont constituées de $n$ observations indépendantes mesurées sur $p$ caractéristiques. Soit $d_{ii'}$ la distance entre les observations $i$ et $i'$. Le choix le plus courant pour $d_{ii'}$ est la distance euclidienne au carré :
+
+$$
+\sum_{j} (x_{ij} - x_{i'j})^{2}
+$$ Supposons que nous avons regroupé les données en $k$ clusters $C_{1}, C_{2}, \ldots, C_{k}$, où $C_{r}$ représente les indices des observations dans le cluster $r$, et $n_{r} = \vert C_{r} \vert$. Soit $$
+D_{r}=\sum_{i, i' \in C_{r}} d_{i i'} \
+$$ la somme des distances entre toutes les paires de points dans le cluster $r$, et définissons $$
+W_{k}=\sum_{r=1}^{k} \frac{1}{2 n_{r}} D_{r} \ (2)
+$$ Tout d'abord, $D_{r} = \sum_{i, i' \in C_{r}} d_{ii'}$, qui représente la somme des distances entre toutes les paires de points dans le cluster $r$.
+
+Ensuite, $W_{k} = \sum_{r = 1}^{k} \frac{1}{2n_{r}} D_{r}$, soit la somme, pour chaque cluster $r$ (avec $r$ variant de $1$ à $k$), du produit de $D_{r}$ par $\frac{1}{2n_{r}}$. Ici, $n_{r}$ est le nombre d'observations dans le cluster $r$ ($n_{r} = |C_{r}|$).
+
+Lorsque la distance $d$ est la distance euclidienne au carré, $W_{k}$ représente la somme des carrés des distances intra-clusters autour des moyennes de chaque cluster, où le coefficient $2$ assure la cohérence de ce calcul. Dans cette notation, la taille de l'échantillon $n$ est omise. En général, plus la valeur de $W_{k}$ est petite, plus les points au sein des clusters sont rapprochés, ce qui indique potentiellement une meilleure qualité de clustering. Cette mesure est utilisée pour évaluer la qualité du clustering en fonction du nombre de clusters $k$ et joue un rôle important dans le calcul de la statistique de l'écart (Gap Statistic) dans les étapes ultérieures.
+
+Voici la traduction en français, avec une reformulation pour améliorer la clarté :
+
+Prenons deux exemples simples. Considérons un cluster $r$, où $D_r$ représente la somme des distances entre toutes les paires de trois observations dans ce cluster. Supposons simplement que la distance entre chaque paire de points est la même, afin de simplifier la compréhension. Étant donné que chaque distance entre deux points est comptée deux fois (par exemple, la distance entre le point $i$ et le point $i'$, ainsi que celle entre $i'$ et $i$), cela équivaut à deux fois la somme des longueurs des arêtes.
+
+```{r, echo = FALSE}
+# window
+plot(NULL, xlim = c(-2.5, 2.5), ylim = c(-1, 1.5), xlab = "", ylab = "", axes = TRUE, asp = 1)
+title("Cluster r")
+
+# points
+points_x <- c(0, 1, -1)
+points_y <- c(sqrt(3)/2, -sqrt(3)/2, -sqrt(3)/2)
+
+points(points_x, points_y, pch = 21, bg = "white", cex = 2)
+
+# triangle
+segments(points_x[1], points_y[1], points_x[2], points_y[2])
+segments(points_x[2], points_y[2], points_x[3], points_y[3])
+segments(points_x[3], points_y[3], points_x[1], points_y[1])
+
+# d
+text((points_x[1] + points_x[2]) / 2, (points_y[1] + points_y[2]) / 2, "d", col = "blue", cex = 1.5)
+text((points_x[2] + points_x[3]) / 2, (points_y[2] + points_y[3]) / 2, "d", col = "blue", cex = 1.5)
+text((points_x[3] + points_x[1]) / 2, (points_y[3] + points_y[1]) / 2, "d", col = "blue", cex = 1.5)
+```
+
+$$
+D_r = D \times 2 \times 3
+$$
+
+Prenons un autre exemple pour $W_k$ où $k = 3$.
+
+```{r, echo = FALSE}
+# 设置图形窗口
+plot(NULL, xlim = c(-1.5, 5), ylim = c(-2, 2), xlab = "", ylab = "", axes = TRUE, asp = 1)
+
+# 定义三个不同大小、位置的三角形的顶点坐标
+# 第一个三角形
+points_x1 <- c(0, 1, -1)
+points_y1 <- c(sqrt(3)/2, -sqrt(3)/2, -sqrt(3)/2)
+
+# 第二个三角形（缩放并偏移位置）
+points_x2 <- c(2.5, 3.2, 1.8)
+points_y2 <- c(-0.5, 0.5, 0.5)
+
+# 第三个三角形（进一步缩放并偏移位置）
+points_x3 <- c(4, 4.5, 3.5)
+points_y3 <- c(-1.2, -2, -2)
+
+# 绘制第一个三角形
+points(points_x1, points_y1, pch = 21, bg = "white", cex = 1.5)
+segments(points_x1[1], points_y1[1], points_x1[2], points_y1[2])
+segments(points_x1[2], points_y1[2], points_x1[3], points_y1[3])
+segments(points_x1[3], points_y1[3], points_x1[1], points_y1[1])
+# 标注距离
+text((points_x1[1] + points_x1[2]) / 2, (points_y1[1] + points_y1[2]) / 2, "d", col = "blue", cex = 1)
+text((points_x1[2] + points_x1[3]) / 2, (points_y1[2] + points_y1[3]) / 2, "d", col = "blue", cex = 1)
+text((points_x1[3] + points_x1[1]) / 2, (points_y1[3] + points_y1[1]) / 2, "d", col = "blue", cex = 1)
+
+# 绘制第二个三角形
+points(points_x2, points_y2, pch = 21, bg = "white", cex = 1.5)
+segments(points_x2[1], points_y2[1], points_x2[2], points_y2[2])
+segments(points_x2[2], points_y2[2], points_x2[3], points_y2[3])
+segments(points_x2[3], points_y2[3], points_x2[1], points_y2[1])
+# 标注距离
+text((points_x2[1] + points_x2[2]) / 2, (points_y2[1] + points_y2[2]) / 2, "d'", col = "blue", cex = 1)
+text((points_x2[2] + points_x2[3]) / 2, (points_y2[2] + points_y2[3]) / 2, "d'", col = "blue", cex = 1)
+text((points_x2[3] + points_x2[1]) / 2, (points_y2[3] + points_y2[1]) / 2, "d'", col = "blue", cex = 1)
+
+# 绘制第三个三角形
+points(points_x3, points_y3, pch = 21, bg = "white", cex = 1.5)
+segments(points_x3[1], points_y3[1], points_x3[2], points_y3[2])
+segments(points_x3[2], points_y3[2], points_x3[3], points_y3[3])
+segments(points_x3[3], points_y3[3], points_x3[1], points_y3[1])
+# 标注距离
+text((points_x3[1] + points_x3[2]) / 2, (points_y3[1] + points_y3[2]) / 2, "d''", col = "blue", cex = 1)
+text((points_x3[2] + points_x3[3]) / 2, (points_y3[2] + points_y3[3]) / 2, "d''", col = "blue", cex = 1)
+text((points_x3[3] + points_x3[1]) / 2, (points_y3[3] + points_y3[1]) / 2, "d''", col = "blue", cex = 1)
+```
+
+$$
+W_k = \sum_{r=1}^{k = 3} \frac{D_r}{2 n_r} =\frac{ d \times 2 \times 3 + d' \times 2 \times 3 + d'' \times 2 \times 3}{2\times3}
+$$
+
+```{r, echo = FALSE}
+# 设置图形窗口
+plot(NULL, xlim = c(-1.5, 5), ylim = c(-2, 2), xlab = "", ylab = "", axes = TRUE, asp = 1)
+title("k = 2")
+
+# 第一个三角形的顶点坐标
+points_x1 <- c(0, 1, -1)
+points_y1 <- c(sqrt(3)/2, -sqrt(3)/2, -sqrt(3)/2)
+
+# 第二个三角形的顶点坐标（偏移位置）
+points_x2 <- c(4, 4.5, 3.5)
+points_y2 <- c(0.2, 1, 1)
+
+# 绘制第一个三角形的顶点
+points(points_x1, points_y1, pch = 21, bg = "white", cex = 1.5)
+
+# 绘制第二个三角形的顶点
+points(points_x2, points_y2, pch = 21, bg = "white", cex = 1.5)
+
+# 绘制第一个三角形
+points(points_x1, points_y1, pch = 21, bg = "white", cex = 1.5)
+segments(points_x1[1], points_y1[1], points_x1[2], points_y1[2])
+segments(points_x1[2], points_y1[2], points_x1[3], points_y1[3])
+segments(points_x1[3], points_y1[3], points_x1[1], points_y1[1])
+# 标注距离
+text((points_x1[1] + points_x1[2]) / 2, (points_y1[1] + points_y1[2]) / 2, "d", col = "blue", cex = 1)
+text((points_x1[2] + points_x1[3]) / 2, (points_y1[2] + points_y1[3]) / 2, "d", col = "blue", cex = 1)
+text((points_x1[3] + points_x1[1]) / 2, (points_y1[3] + points_y1[1]) / 2, "d", col = "blue", cex = 1)
+
+# 绘制第二个三角形
+points(points_x2, points_y2, pch = 21, bg = "white", cex = 1.5)
+segments(points_x2[1], points_y2[1], points_x2[2], points_y2[2])
+segments(points_x2[2], points_y2[2], points_x2[3], points_y2[3])
+segments(points_x2[3], points_y2[3], points_x2[1], points_y2[1])
+# 标注距离
+text((points_x2[1] + points_x2[2]) / 2, (points_y2[1] + points_y2[2]) / 2, "d'", col = "blue", cex = 1)
+text((points_x2[2] + points_x2[3]) / 2, (points_y2[2] + points_y2[3]) / 2, "d'", col = "blue", cex = 1)
+text((points_x2[3] + points_x2[1]) / 2, (points_y2[3] + points_y2[1]) / 2, "d'", col = "blue", cex = 1)
+
+
+center_x1 <- mean(points_x1)
+center_y1 <- mean(points_y1)
+center_x2 <- mean(points_x2)
+center_y2 <- mean(points_y2)
+
+# 绘制包裹三角形的圆圈
+symbols(center_x1, center_y1, circles = 1.5, add = TRUE, inches = FALSE, lwd = 1)
+symbols(center_x2, center_y2, circles = 0.8, add = TRUE, inches = FALSE, lwd = 1)
+```
+
+```{r, echo=FALSE}
+# 设置图形窗口
+plot(NULL, xlim = c(-1.5, 5), ylim = c(-2, 2), xlab = "", ylab = "", axes = TRUE, asp = 1)
+title("k = 3")
+# 第一个三角形的顶点坐标
+points_x1 <- c(0, 1, -1)
+points_y1 <- c(sqrt(3)/2, -sqrt(3)/2, -sqrt(3)/2)
+
+# 第二个三角形的顶点坐标（偏移位置）
+points_x2 <- c(4, 4.5, 3.5)
+points_y2 <- c(0.2, 1, 1)
+
+# 绘制第一个三角形的顶点
+points(points_x1, points_y1, pch = 21, bg = "white", cex = 1.5)
+
+# 绘制第二个三角形的顶点
+points(points_x2, points_y2, pch = 21, bg = "white", cex = 1.5)
+
+# 绘制第一个三角形
+points(points_x1, points_y1, pch = 21, bg = "white", cex = 1.5)
+#segments(points_x1[1], points_y1[1], points_x1[2], points_y1[2])
+segments(points_x1[2], points_y1[2], points_x1[3], points_y1[3])
+#segments(points_x1[3], points_y1[3], points_x1[1], points_y1[1])
+# 标注距离
+#text((points_x1[1] + points_x1[2]) / 2, (points_y1[1] + points_y1[2]) / 2, "d", col = "blue", cex = 1)
+text((points_x1[2] + points_x1[3]) / 2, (points_y1[2] + points_y1[3]) / 2, "d", col = "blue", cex = 1)
+#text((points_x1[3] + points_x1[1]) / 2, (points_y1[3] + points_y1[1]) / 2, "d", col = "blue", cex = 1)
+
+# 绘制第二个三角形
+points(points_x2, points_y2, pch = 21, bg = "white", cex = 1.5)
+segments(points_x2[1], points_y2[1], points_x2[2], points_y2[2])
+segments(points_x2[2], points_y2[2], points_x2[3], points_y2[3])
+segments(points_x2[3], points_y2[3], points_x2[1], points_y2[1])
+# 标注距离
+text((points_x2[1] + points_x2[2]) / 2, (points_y2[1] + points_y2[2]) / 2, "d'", col = "blue", cex = 1)
+text((points_x2[2] + points_x2[3]) / 2, (points_y2[2] + points_y2[3]) / 2, "d'", col = "blue", cex = 1)
+text((points_x2[3] + points_x2[1]) / 2, (points_y2[3] + points_y2[1]) / 2, "d'", col = "blue", cex = 1)
+
+
+
+# 绘制包裹三角形的圆圈
+symbols(center_x2, center_y2, circles = 0.8, add = TRUE, inches = FALSE, lwd = 1)
+
+symbols(center_x1, 0.9, circles = 0.3, add = TRUE, inches = FALSE, lwd = 1)
+
+# 绘制包裹第一个三角形的椭圆
+draw.ellipse(center_x1, center_y1-0.5, a = 1.5, b = 0.7, lwd = 1)
+```
+
+Dans cet exemple simple, si le nombre de clusters dépasse 2 à 3, alors la distance moyenne $W_k$ reste inchangée.
+
+$$
+\begin{aligned}
+W_2 &= \sum_{r=1}^{2} \frac{D_r}{2 n_r} =\frac{ d \times 2 \times 3 + d' \times 2 \times 3}{2\times3} = d+d'\\
+ W_3 &=\sum_{r=1}^{3} \frac{D_r}{2 n_r} =0+ \frac{d \times 2 \times 2}{2 \times 2 }+\frac{d' \times 2 \times 3 }{2 \times 3 } = d+d'
+\end{aligned}
+\Longrightarrow W_2 = W_3
+$$
+
+En comparant le graphique de $\log (W_{k})$ avec la valeur attendue des données sous une distribution de référence appropriée pour l'hypothèse nulle, on peut ainsi le standardiser.Ensuite, notre estimation du nombre optimal de clusters est la valeur de $k$ pour laquelle la diminution de $\log (W_{k})$ par rapport à cette courbe de référence est la plus importante.
+
+Choix de $\log (W_{k})$ pour les raisons suivantes :
+
+1.  **Monotonie et mise en évidence de la tendance des variations**
+
+    En général, $W_{k}$ varie de manière monotone avec l'augmentation du nombre de clusters $k$ (généralement en décroissance monotone, car plus le nombre de clusters est élevé, plus les points dans chaque cluster peuvent être rapprochés, et donc l'indice de "dispersion" intra-cluster $W_{k}$ diminue). En prenant le logarithme de $W_{k}$, $\log (W_{k})$ conserve cette monotonie, mais rend la tendance des variations plus visible et plus facile à analyser. Par exemple, dans les données réelles, lorsque $k$ augmente progressivement à partir de petites valeurs, la diminution de $W_{k}$ peut être relativement lente dans certaines plages ; en prenant le logarithme, cette variation est amplifiée graphiquement, ce qui permet de mieux visualiser les caractéristiques de $W_{k}$ en fonction de $k$, en particulier pour identifier le "coude" (le point où la tendance passe d'une forte variation à une variation plus modérée). Ainsi, $\log (W_{k})$ présente un avantage par rapport à $W_{k}$.
+
+2.  **Facilité de comparaison avec la distribution de référence**
+
+    Lors de la comparaison de $\log (W_{k})$ avec sa valeur attendue sous une distribution de référence appropriée pour l'hypothèse nulle, les propriétés de la fonction logarithme rendent cette comparaison mathématiquement et visuellement plus aisée. D'un point de vue mathématique, la fonction logarithme permet de transformer des relations multiplicatives en relations additives, ce qui peut simplifier certains calculs et déductions théoriques. Visuellement, l'échelle des valeurs de $\log (W_{k})$ est souvent plus adaptée pour apprécier l'écart par rapport à la valeur attendue. Par exemple, si l'on compare directement $W_{k}$ à la valeur attendue, les différences numériques peuvent être difficiles à interpréter lorsque $W_{k}$ prend des valeurs très grandes ou très petites ; en prenant le logarithme, cet écart est exprimé sur une échelle plus intuitive, facilitant l'évaluation de l'écart entre les données observées et le cas attendu sous l'hypothèse nulle, et aidant à déterminer le nombre optimal de clusters.
+
+3.  **Stabilité dans l'analyse statistique**
+
+    En analyse statistique, $\log (W_{k})$ est souvent plus stable que $W_{k}$. Pour certaines distributions de données et situations de clustering, $W_{k}$ peut être fortement influencé par des valeurs extrêmes ou des fluctuations des données, ce qui rend sa valeur moins stable et peut fausser l'estimation du nombre optimal de clusters. En prenant le logarithme, $\log (W_{k})$ atténue cet effet, rendant l'analyse et l'estimation basées sur $\log (W_{k})$ plus robustes et fiables. Par exemple, en présence de quelques valeurs aberrantes, celles-ci peuvent provoquer de grandes variations dans $W_{k}$, alors que leur impact sur $\log (W_{k})$ est relativement faible, ce qui permet d'obtenir une évaluation du clustering qui n'est pas excessivement biaisée par des données extrêmes.
+
+Par conséquent, nous définissons , pour chaque $k \in \mathbb{N_*}$:
+
+$$
+Gap_{n}(k) = E_{n}^{*}\left\{\log \left(W_{k}\right)\right\}-\log \left(W_{k}\right) \ (3) 
+$$
+
+```{r, echo = FALSE}
+#Utilisons d'abord l'algorithme K-means pour donner un ensemble de données.
+# 设置种子确保可重复性
+set.seed(123)
+
+# 模拟 3 个正态分布组数据
+n <- 50
+# 确保数据框的所有列都是数值型
+data <- data.frame(
+  X1 = as.numeric(c(rnorm(n, mean = 2), rnorm(n, mean = 6))),
+  X2 = as.numeric(c(rnorm(n, mean = 2), rnorm(n, mean = 6)))
+)
+
+
+# 应用 K-means 算法
+k <- 2
+kmeans_result <- kmeans(data, centers = k,nstart = 1)
+
+# 将聚类结果添加到数据框
+data$cluster <- factor(kmeans_result$cluster)
+
+# 绘制结果
+ggplot(data, aes(X1, X2, color = cluster)) +
+  geom_point() +
+  geom_point(data = as.data.frame(kmeans_result$centers), aes(X1, X2), color = "red", size = 3, shape = 4) +
+  ggtitle("K-means Clustering with Centers")
+
+# 计算不同簇数下的总平方和
+wss <- sapply(1:10, function(k) {
+  kmeans(data, centers = k, nstart = 10)$tot.withinss
+})
+
+# 绘制聚类内平方和随簇数变化的折线图
+plot(1:10, wss, type = "b", pch = 16, xlab = "number of clusters k",
+     ylab = "within sum of squares Wk", main = "(b)")
+
+# 计算 log(Wk)
+log_wss <- log(wss)
+
+# 计算 E(log(Wk))，通过模拟均匀分布的参考数据集
+generate_uniform_points <- function(data, n) {
+  mins <- apply(data, 2, min)
+  maxs <- apply(data, 2, max)
+  uniform_pts <- matrix(nrow = n, ncol = ncol(data))
+  for (dim in 1:ncol(data)) {
+    uniform_pts[, dim] <- runif(n, min = mins[dim], max = maxs[dim])
+  }
+  as.data.frame(uniform_pts)
+}
+# 模拟参考分布的 E(log(Wk))
+num_bootstraps <- 10  # 参考分布的样本数
+ref_log_wss <- sapply(1:10, function(k) {
+  ref_wss <- replicate(num_bootstraps, {
+    ref_data <- generate_uniform_points(data[, c("X1", "X2")], nrow(data))
+    kmeans(ref_data, centers = k, nstart = 10)$tot.withinss
+  })
+  mean(log(ref_wss))
+})
+
+# 绘制 log(Wk) 和 E(log(Wk))
+plot(1:10, log_wss, type = "b", pch = 16, xlab = "number of clusters k",
+     ylab = "log(Wk)", main = "log(Wk) and E(log(Wk))", col = "black", ylim = range(c(log_wss, ref_log_wss)))
+lines(1:10, ref_log_wss, type = "b", pch = 1, col = "blue")
+legend("topright", legend = c("log(Wk)", "E(log(Wk))"), col = c("black", "blue"), pch = c(16, 1), lty = 1)
+
+# 计算差值 E(log(Wk)) - log(Wk)
+gap <- ref_log_wss - log_wss
+
+# 绘制差值图
+plot(1:10, gap, type = "b", pch = 16, col = "purple", xlab = "number of clusters k",
+     ylab = "Gap (E(log(Wk)) - log(Wk))", main = "Gap between E(log(Wk)) and log(Wk)")
+
+
+```
+
+# Reference distribution
+
+Pour transformer le Gap Statistic en procédure opérationnelle, nous devons trouver une distribution de référence appropriée et évaluer la distribution d'échantillonnage du Gap Statistic.
+
+## Principe de génération
+
+Nous supposons que le dataset d'échantillons est $X$, avec $n$ samples, $p$ features.
+
+$$
+\text{X} = 
+\begin{bmatrix}
+  & x_{1,1} & \cdots & \cdots & x_{1,p} \\
+  & \vdots & \ddots &  \ddots &\vdots \\
+  & x_{i,1} & \cdots  & \cdots & x_{i,p} \\
+  & \vdots & \ddots  & \ddots & \vdots \\
+  & x_{n,1} & \ddots & \cdots & x_{n,p} \\
+\end{bmatrix}
+\text{n samples, p features}
+$$
+
+Pour chaque feature, il doit y avoir une valeur minimale et une valeur maximale. Par exemple, la première feature : $X_1 \in [x_{1,min},x_{1,max}]$.
+
+Générons de manière aléatoire d'une distribution de référence par une distribution continue uniforme, nous obtenons :
+
+$$
+\text{$X'_1$} = 
+\begin{bmatrix}
+  & x'_{1,1} \\
+  & \vdots  \\
+  & \vdots \\
+  & x'_{n,1} \\
+\end{bmatrix}
+\text{n samples}
+$$ où $x'_{i,1} \in [x_{1,min},x_{1,max}]$.
+
+Pour les autres features, nous les générons de la même manière, alors nous obtenons la distribution de référence $X'$ :
+
+$$
+\text{X'} = 
+\begin{bmatrix}
+  & x'_{1,1} & \cdots & \cdots & x'_{1,p} \\
+  & \vdots & \ddots &  \ddots &\vdots \\
+  & x'_{i,1} & \cdots  & \cdots & x'_{i,p} \\
+  & \vdots & \ddots  & \ddots & \vdots \\
+  & x'_{n,1} & \ddots & \cdots & x'_{n,p} \\
+\end{bmatrix}
+\text{n samples, p features}
+$$
+
+## Théorèmes
+
+Nous désignons par $S^{p}$ l'ensemble de ces distributions à composante unique (ou variables aléatoires) sur $R^{p}$.
+
+Pour voir comment trouver une distribution de référence appropriée, considérons un instant la version de la population correspondant au Gap Statistic dans le cas du regroupement par K-means :
+
+$$
+g(k)=\log\left\{\frac{MSE_{X^{*}}(k)}{MSE_{X^{*}}(1)}\right\}-\log\left\{\frac{MSE_{X}(k)}{MSE_{X}(1)}\right\}
+$$ où $MSE_{X}(k)=E(\min_{\mu\in A_{k}}\|X - \mu\|^{2})$.
+
+Le gap statistic compare les performances du modèle null (un cluster) à celles des modèles alternatifs ($k > 1$) en mesurant la réduction de la variance intra-cluster. $A_{k}\subset R^{p}$ est un ensemble de $k$-points minimisant cette variance. La statistique est normalisée pour que $g(1)=0$, facilitant la comparaison entre le modèle nul et les modèles avec plusieurs clusters.
+
+Selon l'article, nous introduisons maintenant deux théorèmes sur la distribution de référence.
+
+***Théorème 1*** ***est associé à la distribution de référence univariée :***
+
+*Si* $p = 1$*. Alors pour tout* $k \geq 1$*,* $$
+\inf_{X \in S^p} \frac{\text{MSE}_X(k)}{\text{MSE}_X(1)} = \frac{\text{MSE}_U(k)}{\text{MSE}_U(1)}
+$$
+
+C'est à dire, En dimension 1 ($p=1$), la distribution uniforme $U[0,1]$ est identifiée comme la meilleure distribution de référence pour garantir que $g(k)≤0$ pour tout $k≥1$.
+
+***Théorème 2*** ***est associé à la distribution en dimensions élevées :***
+
+*Pour* $p>1$*, il n'existe aucune distribution de référence* $U \in S^{p}$*, sauf si son support est réduit à un sous-ensemble dégénéré (ex. une ligne droite).*
+
+Donc, en dimensions élevées, on ne peut pas utiliser une méthode générique pour comparer les modèles. Cela limite l'applicabilité directe du Gap Statistic telle qu'elle est définie pour les cas univariés.
+
+**Solution proposée : Estimation par maximum de vraisemblance**
+
+Une solution consiste à générer des données de référence à partir de l'estimateur du maximum de vraisemblance (MLE) sous contrainte de log-concavité.
+
+En dimension 1, cette estimation peut être réalisée à l'aide d'algorithmes d'approximation convexes.
+
+En dimensions élevées, le calcul est plus complexe, mais les théorèmes mentionnés fournissent des bases pour construire une distribution de référence simple et efficace.
+
+# Mise en œuvre informatique

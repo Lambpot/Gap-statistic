@@ -1,0 +1,213 @@
+\documentclass[a4paper,12pt,twoside,french]{book}
+\usepackage[
+    %backend=biber, 
+    natbib=true,
+    style=numeric,
+    sorting=none     
+]{biblatex}
+\addbibresource{biblio.bib}%Import the bibliography file
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,left=3cm,right=2.5cm,top=3cm,bottom=3cm, twoside]{geometry}
+\usepackage{xcolor}
+\usepackage{stmaryrd}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{libertine}
+\usepackage[pdftex]{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{apalike}
+\usepackage{minitoc}
+\usepackage{tikz}
+\usepackage{enumitem}
+\usepackage{epigraph}
+%\usetikzlibrary{shadows.blur}
+\usepackage{lscape}
+\usepackage{titletoc}
+%\usepackage{lipsum}
+%\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{arydshln}
+\usepackage[nonumberlist]{glossaries}
+\usepackage{calc}
+\usepackage[]{titlesec} 
+\definecolor{linkColor}{HTML}{32a852}
+\usepackage[colorlinks=true,citecolor=linkColor,linkcolor=black]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{lipsum}
+
+\usepackage{setspace}
+\onehalfspacing
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\definecolor{yourcolor}{HTML}{8a0e19}%{008bb2}
+
+\titleformat{\chapter}[display]
+{\normalfont\color{yourcolor}}
+{\filleft\huge\color{black}\textsc\chaptertitlename\hspace*{2mm}%
+	\begin{tikzpicture}[baseline={([yshift=-.6ex]current bounding box.center)}]
+	\node[fill=yourcolor,circle,text=white] {\thechapter};
+	\end{tikzpicture}
+}
+{1ex}
+{\titlerule[1.5pt]\vspace*{1.5ex}\Huge\color{black}\textsc}
+[]
+
+\titleformat{name=\chapter,numberless}[display]
+{\normalfont\color{black}}
+{}
+{1ex}
+{\vspace*{-5cm}\Huge\textsc}
+[]
+
+%command to print the acutal minitoc
+\newcommand{\printmyminitoc}[1]{%
+	\noindent\hspace{1cm}%
+	\colorlet{chpnumbercolor}{black}%
+	\begin{tikzpicture}
+	\node(s){
+		\begin{minipage}{.9\linewidth}%minipage trick
+		\printcontents[chapters]{}{1}{}
+		\end{minipage}
+	};
+	{
+		\color{yourcolor}
+		\draw(s.north west)--(s.north east) (s.south west)--(s.south east);
+	}
+	\end{tikzpicture}
+	\vspace*{3ex}
+	
+	#1
+	\vfill
+	\pagebreak
+}
+
+
+\newcommand{\HRule}{\rule{\linewidth}{0.7mm}}
+\newcommand{\Hrule}{\rule{\linewidth}{0.3mm}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+\begin{document}
+	
+%\maketitle
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+	\begin{titlepage}
+		\begin{center}
+			\begin{tabular}{c@{\hskip 7cm}c@{\hskip 1cm}}
+				\includegraphics[height=2.5cm]{UParisCitelogo.jpg} &
+				%si autre logo : \includegraphics[height=2.3cm]{figures/PageTitre/logo_ic_2021.jpg}
+			\end{tabular}
+		\end{center}
+	
+		\begin{center}
+		
+\vspace*{.03\textheight}
+\textsc{\LARGE Université Paris Cité}\\[0.2cm] % Univ name
+		\large 	ISIFAR \\ 
+        %Équipe de recherche\\
+  
+  			\vfill
+ 
+	 		\rule{\textwidth}{0.8pt} \\ % Horizontal line
+	 		\vspace{10pt}
+	 		 { \LARGE \bfseries Estimation du nombre de cluster à l'aide du Gap Statistique} % Thesis title
+	 		 \vspace{10pt}
+	 		 \rule{\textwidth}{0.8pt} \\ % Horizontal line
+		\end{center}
+		
+		\vfill
+		% Author and supervisor	
+		\begin{center}
+			Par\\ \textsc{\Large Steve BASSO NGOUNE \\  Ruoqi ZHU \\ \vspace{8pt}Hengze WANG}\\[1cm] 
+            
+			Projet Master en \textsc{\large Apprentissage Statistique}\\[1.2cm]
+            
+		
+            \vspace{1cm}
+	
+			Novembre 2024
+		\end{center}
+        		\vspace{1cm}
+			
+		
+		\begin{center}
+			\begin{tabular}{lll}
+				\textsc{Aurélie Fischer} & Professeur \\
+				
+			\end{tabular}\\[1cm]
+		\end{center}
+		
+		\vspace{1cm}
+
+	\newpage %page de garde vide
+	\thispagestyle{empty} %page de garde vide
+	\end{titlepage}
+
+
+\pagestyle{fancy}
+
+\fancyhead{}
+
+\renewcommand{\chaptermark}[1]{\markboth{\textsc{#1}}{}}
+
+
+\frontmatter
+
+\tableofcontents
+\addcontentsline{toc}{chapter}{Table des matières}
+
+% \listoffigures
+% \addcontentsline{toc}{chapter}{Liste des figures}
+
+% \listoftables
+% \addcontentsline{toc}{chapter}{Liste des tableaux}
+
+
+\mainmatter
+
+\setlength{\parskip}{.7em}
+
+\titlespacing*{\section}{0pt}{.9em}{.8em}
+\renewcommand{\baselinestretch}{1.1}
+
+
+\fancyhead[RO]{\leftmark}
+\fancyhead[LE]{\textsc{\chaptername~\thechapter}}
+
+
+\input{Chapters/intro.tex}
+
+%\part{Stae of the art}
+\input{Chapters/chapter01.tex}
+
+%\part{Contribution}
+\input{Chapters/chapter02.tex}
+
+%\part{Conclusion}
+\input{Chapters/conclusion}
+
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+\fancyhead[OL]{\textsc{Bibliographie}}
+\printbibliography[
+notcategory=cited,
+heading=bibintoc,
+title={Bibliographie}]
+
+\end{document}

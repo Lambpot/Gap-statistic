@@ -1,0 +1,14 @@
+\chapter*{Introduction}
+%\startcontents[chapters]
+\addcontentsline{toc}{chapter}{Introduction}  
+
+
+Dans le domaine de l'analyse de clustering, déterminer le nombre optimal de clusters représente un défi de taille. Le Gap Statistic\cite{tibshirani_estimating_2001}, ou "statistique de l’écart", est une méthode d’évaluation cruciale qui a émergé pour répondre à ce besoin. Son principe repose sur la comparaison entre la structure de clustering des données réelles et celle d'une distribution de référence pour déterminer le nombre de clusters le plus approprié. Cette méthode fournit un moyen systématique et quantitatif d’évaluer la pertinence des résultats de clustering.
+
+Le calcul du Gap Statistique implique plusieurs étapes clés. Tout d'abord, pour un jeu de données donné et différents nombres hypothétiques de clusters, on calcule la variance intra-cluster, mesurant ainsi la cohésion des points au sein de chaque cluster. Une variance faible indique une similarité élevée entre les points d'un même cluster. Ensuite, une distribution de référence est construite, généralement par des méthodes de randomisation ou de simulation. On calcule ensuite la variance intra-cluster attendue dans cette distribution de référence. Enfin, on évalue la qualité des résultats de clustering pour chaque nombre de clusters en calculant la valeur du "Gap", soit la différence entre la variance intra-cluster réelle et celle attendue dans la référence. Un Gap élevé indique que la structure de clustering réelle se distingue de manière significative de la structure attendue sous la distribution de référence, suggérant que le nombre de clusters choisi est approprié.
+
+Le Gap Statistique présente de nombreux avantages. Il ne dépend pas d'hypothèses spécifiques sur la distribution des données, ce qui lui confère une grande polyvalence pour traiter divers types de données. Comparé aux règles empiriques traditionnelles ou aux méthodes de jugement subjectif, le Gap Statistic fournit un critère d'évaluation objectif basé sur des principes statistiques, réduisant ainsi les biais humains. Dans la pratique, cette méthode a été largement adoptée dans plusieurs domaines. Par exemple, en recherche biomédicale, elle aide les chercheurs à analyser les données d'expression génétique pour identifier des sous-types de maladies potentiels ou des biomarqueurs ; en études de marché, elle permet de segmenter les groupes de consommateurs, facilitant ainsi l’élaboration de stratégies de marketing plus ciblées. Le Gap Statistique constitue donc une méthode précieuse pour déterminer le nombre optimal de clusters en analyse de clustering.
+
+Le but de cette étude est de comprendre le fonctionnement de la méthode, puis de l'appliquer à des données simulées avant de la tester sur une base de données réelle.
+
+
